@@ -12,7 +12,6 @@
             background: #f5f5f5;
         }
 
-        /* 모바일 컨테이너 */
         .container {
             max-width: 100%;
             width: 95%;
@@ -47,7 +46,6 @@
             font-weight: bold;
         }
 
-        /* 테이블 감싸는 영역 - 모바일에서 스크롤 지원 */
         .table-wrapper {
             width: 100%;
             overflow-x: auto;
@@ -55,7 +53,7 @@
         }
 
         table {
-            width: 800px; /* 넓게 만들고 스크롤로 확인 */
+            width: 800px;
             border-collapse: collapse;
             min-width: 600px;
         }
@@ -71,7 +69,6 @@
         .ok { color: #0a7a0a; font-weight: bold; }
         .no { color: #c80000; font-weight: bold; }
 
-        /* 모바일 전용 스타일 */
         @media (max-width: 480px) {
             body {
                 padding: 12px;
@@ -90,11 +87,26 @@
                 font-size: 14px;
             }
         }
+
+        /* 상단 경고 배너 */
+        .notice {
+            background: #fff3cd;
+            color: #856404;
+            padding: 10px 12px;
+            border-radius: 8px;
+            border: 1px solid #ffeeba;
+            margin-bottom: 12px;
+            font-size: 0.95rem;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h2>강의실 이용 가능 여부 조회 (3개 강의실)</h2>
+
+        <div id="topNotice" class="notice" style="display:none;">
+            ※ 오후 10:00(22:00) 이후에는 강의실 이용이 불가합니다.
+        </div>
 
         <label>요일 선택</label>
         <select id="day">
@@ -156,11 +168,13 @@
             "176-4": "대부분 PC 솔리드웍스 미설치"
         };
 
+        /* HH:MM → 분 */
         function timeToMinutes(t) {
             const [h, m] = t.split(":").map(Number);
             return h * 60 + m;
         }
 
+        /* 다음 수업 시간 계산 */
         function getNextClass(timeList, nowM) {
             let nextTimes = [];
             timeList.forEach(slot => {
@@ -180,6 +194,7 @@
             const day = document.getElementById("day").value;
             const time = document.getElementById("time").value;
             const resultBody = document.getElementById("resultBody");
+            const topNotice = document.getElementById("topNotice");
 
             if (!time) {
                 alert("시간을 입력하세요!");
@@ -187,10 +202,31 @@
             }
 
             const userTime = timeToMinutes(time);
+            const cutoff = 22 * 60; // 22:00 -> 1320분
+
             resultBody.innerHTML = "";
 
+            // 22:00 이상이면 사용불가 안내를 표에 표시
+            if (userTime >= cutoff) {
+                topNotice.style.display = "block";
+                Object.keys(schedule).forEach(room => {
+                    const row = document.createElement("tr");
+                    row.innerHTML = `
+                        <td>${room}</td>
+                        <td class="no">✖ 이용 불가 (22:00 이후 이용 불가)</td>
+                        <td>-</td>
+                        <td>${notes[room] || "-"}</td>
+                    `;
+                    resultBody.appendChild(row);
+                });
+                return;
+            } else {
+                topNotice.style.display = "none";
+            }
+
+            // 정상 조회 로직
             Object.keys(schedule).forEach(room => {
-                const reserved = schedule[room][day];
+                const reserved = schedule[room][day] || [];
                 let available = true;
 
                 reserved.forEach(slot => {
@@ -220,4 +256,6 @@
     </script>
 </body>
 </html>
+
+
 
