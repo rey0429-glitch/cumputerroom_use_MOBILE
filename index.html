@@ -88,7 +88,6 @@
             }
         }
 
-        /* 상단 경고 배너 */
         .notice {
             background: #fff3cd;
             color: #856404;
@@ -105,7 +104,7 @@
         <h2>강의실 이용 가능 여부 조회 (3개 강의실)</h2>
 
         <div id="topNotice" class="notice" style="display:none;">
-            ※ 오후 10:00(22:00) 이후에는 강의실 이용이 불가합니다.
+            ※ 오전 08:00 이전 및 오후 10:00 이후에는 강의실 이용이 불가합니다.
         </div>
 
         <label>요일 선택</label>
@@ -168,13 +167,11 @@
             "176-4": "대부분 PC 솔리드웍스 미설치"
         };
 
-        /* HH:MM → 분 */
         function timeToMinutes(t) {
             const [h, m] = t.split(":").map(Number);
             return h * 60 + m;
         }
 
-        /* 다음 수업 시간 계산 */
         function getNextClass(timeList, nowM) {
             let nextTimes = [];
             timeList.forEach(slot => {
@@ -202,18 +199,21 @@
             }
 
             const userTime = timeToMinutes(time);
-            const cutoff = 22 * 60; // 22:00 -> 1320분
+
+            const minTime = 8 * 60;   // 08:00
+            const maxTime = 22 * 60;  // 22:00
 
             resultBody.innerHTML = "";
 
-            // 22:00 이상이면 사용불가 안내를 표에 표시
-            if (userTime >= cutoff) {
+            // 제한 시간 체크
+            if (userTime < minTime || userTime >= maxTime) {
                 topNotice.style.display = "block";
+
                 Object.keys(schedule).forEach(room => {
                     const row = document.createElement("tr");
                     row.innerHTML = `
                         <td>${room}</td>
-                        <td class="no">✖ 이용 불가 (22:00 이후 이용 불가)</td>
+                        <td class="no">✖ 이용 불가 (08:00 이전 또는 22:00 이후)</td>
                         <td>-</td>
                         <td>${notes[room] || "-"}</td>
                     `;
@@ -224,7 +224,7 @@
                 topNotice.style.display = "none";
             }
 
-            // 정상 조회 로직
+            // 정상 조회
             Object.keys(schedule).forEach(room => {
                 const reserved = schedule[room][day] || [];
                 let available = true;
@@ -256,6 +256,3 @@
     </script>
 </body>
 </html>
-
-
-
