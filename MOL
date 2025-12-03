@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>강의실 이용 가능 여부 조회</title>
+
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            width: 100%;
+            max-width: 480px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 0 14px rgba(0,0,0,0.08);
+        }
+        h2 {
+            font-size: 20px;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        select, input, button {
+            width: 100%;
+            margin-top: 12px;
+            padding: 14px;
+            font-size: 16px;
+            border-radius: 8px;
+        }
+        select, input {
+            border: 1px solid #ccc;
+            background: #ffffff;
+        }
+        button {
+            background: #4b79ff;
+            color: white;
+            cursor: pointer;
+            border: none;
+            font-weight: bold;
+        }
+        button:hover {
+            opacity: 0.95;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 25px;
+            font-size: 15px;
+        }
+        th, td {
+            padding: 12px 8px;
+            border-bottom: 1px solid #e5e5e5;
+            text-align: center;
+        }
+        .ok { color: #0a7a0a; font-weight: bold; }
+        .no { color: #c80000; font-weight: bold; }
+
+        /* 모바일에서 테이블 글자 줄바꿈 */
+        td, th {
+            word-break: keep-all;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>강의실 이용 가능 여부 조회</h2>
+
+        <label>요일 선택</label>
+        <select id="day">
+            <option value="월">월요일</option>
+            <option value="화">화요일</option>
+            <option value="수">수요일</option>
+            <option value="목">목요일</option>
+            <option value="금">금요일</option>
+        </select>
+
+        <label>이용 희망 시간</label>
+        <input type="time" id="time">
+
+        <button id="checkBtn">조회하기</button>
+
+        <table id="resultTable">
+            <thead>
+                <tr>
+                    <th>강의실</th>
+                    <th>이용 가능 여부</th>
+                </tr>
+            </thead>
+            <tbody id="resultBody"></tbody>
+        </table>
+    </div>
+
+    <script>
+        const schedule = {
+            "176-3호": {
+                "월": ["10:30-11:45", "13:00-14:30","15:00-16:50"],
+                "화": ["10:30-11:45","13:30-15:20"],
+                "수": ["10:30-11:45","13:00-14:50","15:00-16:50"],
+                "목": ["10:30-11:45","13:30-15:20"],
+                "금": ["15:30-17:20"]
+            },
+            "244호": {
+                "월": ["10:30-11:45","16:30-17:45"],
+                "화": ["12:00-13:15","13:30-14:45","15:00-16:15"],
+                "수": ["10:30-11:45","12:00-14:45","16:30-17:45"],
+                "목": ["12:00-13:15","13:30-14:45","15:00-16:15"],
+                "금": ["13:30-16:15"]
+            },
+            "176-4": {
+                "월": ["09:00-10:15","10:30-11:45","15:00-17:45"],
+                "화": ["13:30-14:45","15:00-16:15"],
+                "수": ["09:00-10:15","10:30-11:45","16:30-19:15"],
+                "목": [],
+                "금": ["13:30-16:15"]
+            }
+        };
+
+        function timeToMinutes(t) {
+            const [h, m] = t.split(":").map(Number);
+            return h * 60 + m;
+        }
+
+        document.getElementById("checkBtn").addEventListener("click", function() {
+            const day = document.getElementById("day").value;
+            const time = document.getElementById("time").value;
+            const resultBody = document.getElementById("resultBody");
+
+            if (!time) {
+                alert("시간을 입력하세요!");
+                return;
+            }
+
+            const userTime = timeToMinutes(time);
+            resultBody.innerHTML = "";
+
+            Object.keys(schedule).forEach(room => {
+                const reserved = schedule[room][day];
+                let available = true;
+
+                reserved.forEach(slot => {
+                    const [start, end] = slot.split("-");
+                    const startM = timeToMinutes(start);
+                    const endM = timeToMinutes(end);
+
+                    if (userTime >= startM && userTime <= endM) {
+                        available = false;
+                    }
+                });
+
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td>${room}</td>
+                    <td class="${available ? 'ok' : 'no'}">
+                        ${available ? "✔ 이용 가능" : "✖ 이용 불가"}
+                    </td>
+                `;
+                resultBody.appendChild(row);
+            });
+        });
+    </script>
+</body>
+</html>
